@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Design Interview — Cheat Sheet</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0f11;
+    --bg2: #151719;
+    --bg3: #1c1f22;
+    --border: rgba(255,255,255,0.07);
+    --border-hi: rgba(255,255,255,0.14);
+    --text: #e8e6e0;
+    --text2: #9a9890;
+    --text3: #5a5856;
+    --accent: #c8f57a;
+    --accent2: #7ad4f5;
+    --accent3: #f5a97a;
+    --accent4: #c87af5;
+    --red: #f57a7a;
+    --green: #7af5a9;
+    --font-head: 'Fraunces', Georgia, serif;
+    --font-body: 'DM Sans', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+    --r: 10px;
+    --r-sm: 6px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* Layout */
+  .page { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+  /* Header */
+  header { padding: 3rem 0 2.5rem; border-bottom: 1px solid var(--border); margin-bottom: 2rem; }
+  .header-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 2rem; flex-wrap: wrap; }
+  h1 { font-family: var(--font-head); font-size: 2.8rem; font-weight: 300; line-height: 1.1; color: var(--text); letter-spacing: -0.02em; }
+  h1 em { font-style: italic; color: var(--accent); }
+  .header-meta { font-family: var(--font-mono); font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .1em; margin-top: 1rem; }
+  .search-wrap { position: relative; }
+  .search-wrap input {
+    background: var(--bg3);
+    border: 1px solid var(--border-hi);
+    border-radius: var(--r-sm);
+    padding: 8px 12px 8px 32px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 13px;
+    width: 220px;
+    outline: none;
+  }
+  .search-wrap input:focus { border-color: var(--accent); }
+  .search-wrap input::placeholder { color: var(--text3); }
+  .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 13px; pointer-events: none; }
+
+  /* Nav pills */
+  .filter-nav { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 2rem; }
+  .pill {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 5px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border-hi);
+    background: transparent;
+    color: var(--text2);
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    transition: all .15s;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .pill:hover { border-color: var(--accent); color: var(--accent); }
+  .pill.active { background: var(--accent); color: #0e0f11; border-color: var(--accent); font-weight: 500; }
+
+  /* Section */
+  .section { margin-bottom: 2.5rem; }
+  .section-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 1rem;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-title { font-family: var(--font-head); font-size: 1.15rem; font-weight: 300; color: var(--text); }
+  .section-tag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .tag-scale { background: rgba(200,245,122,0.12); color: var(--accent); }
+  .tag-dur { background: rgba(122,212,245,0.12); color: var(--accent2); }
+  .tag-fault { background: rgba(245,169,122,0.12); color: var(--accent3); }
+  .tag-req { background: rgba(200,122,245,0.12); color: var(--accent4); }
+  .tag-all { background: rgba(255,255,255,0.06); color: var(--text2); }
+
+  /* Grid */
+  .grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+  .grid-2 { grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
+
+  /* Card */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 14px 16px;
+    transition: border-color .15s, background .15s;
+    cursor: default;
+  }
+  .card:hover { border-color: var(--border-hi); background: var(--bg3); }
+  .card-title { font-weight: 500; font-size: 13px; color: var(--text); margin-bottom: 5px; }
+  .card-body { font-size: 12px; color: var(--text2); line-height: 1.55; }
+  .card-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+  .ctag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    border: 1px solid var(--border-hi);
+    color: var(--text3);
+  }
+  .ctag.when { border-color: rgba(200,245,122,0.25); color: var(--accent); background: rgba(200,245,122,0.05); }
+  .ctag.avoid { border-color: rgba(245,122,122,0.25); color: var(--red); background: rgba(245,122,122,0.05); }
+  .ctag.note { border-color: rgba(122,212,245,0.2); color: var(--accent2); background: rgba(122,212,245,0.05); }
+
+  /* Signal cards */
+  .signal {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent4);
+    border-radius: var(--r);
+    padding: 12px 14px;
+    margin-bottom: 8px;
+  }
+  .signal-q { font-weight: 500; font-size: 13px; color: var(--text); margin-bottom: 4px; font-family: var(--font-mono); }
+  .signal-a { font-size: 12px; color: var(--text2); line-height: 1.55; }
+  .signal-a strong { color: var(--accent); font-weight: 500; }
+
+  /* Numbers table */
+  .nums-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .num-block {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 14px 16px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 2;
+    color: var(--text2);
+  }
+  .num-val { color: var(--accent2); font-weight: 500; }
+
+  /* CAP */
+  .cap-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .cap-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r); padding: 14px 16px; }
+  .cap-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; }
+  .cap-cp .cap-label { color: var(--accent); }
+  .cap-ap .cap-label { color: var(--accent2); }
+  .cap-body { font-size: 12px; color: var(--text2); line-height: 1.55; }
+  .cap-examples { font-family: var(--font-mono); font-size: 10px; color: var(--text3); margin-top: 6px; }
+
+  /* Req categories */
+  .req-intro {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 14px 16px;
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.6;
+    margin-bottom: 1rem;
+  }
+  .req-intro strong { color: var(--accent4); font-weight: 500; }
+
+  /* Tradeoff pair */
+  .tradeoff { display: flex; gap: 6px; margin-top: 8px; }
+  .pro { font-size: 11px; color: var(--green); }
+  .pro::before { content: '+ '; }
+  .con { font-size: 11px; color: var(--red); }
+  .con::before { content: '− '; }
+  .pros-cons { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; }
+
+  /* Sticky section nav */
+  .sticky-nav {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: rgba(14,15,17,0.92);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 0;
+    margin-bottom: 1.5rem;
+  }
+  .sticky-inner { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; display: flex; gap: 6px; flex-wrap: wrap; }
+
+  /* Hide/show */
+  .hidden { display: none !important; }
+
+  /* Anchor ids for sticky nav */
+  section { scroll-margin-top: 60px; }
+
+  /* Footer */
+  footer { border-top: 1px solid var(--border); padding-top: 1.5rem; margin-top: 2rem; font-family: var(--font-mono); font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; }
+
+  @media (max-width: 640px) {
+    h1 { font-size: 2rem; }
+    .grid { grid-template-columns: 1fr; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .cap-grid { grid-template-columns: 1fr; }
+    .nums-grid { grid-template-columns: 1fr; }
+    .search-wrap input { width: 160px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <header>
+    <div class="header-top">
+      <div>
+        <h1>System Design<br><em>Interview Cheat Sheet</em></h1>
+        <p class="header-meta">Components · Requirements · Tradeoffs · Interview signals</p>
+      </div>
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input type="text" id="search" placeholder="Search components..." oninput="doSearch(this.value)">
+      </div>
+    </div>
+  </header>
+</div>
+
+<div class="sticky-nav">
+  <div class="sticky-inner">
+    <a class="pill active" href="#" onclick="filterAll(event)">All</a>
+    <a class="pill" href="#ingress" onclick="scrollTo('ingress',event)">Ingress</a>
+    <a class="pill" href="#compute" onclick="scrollTo('compute',event)">Compute</a>
+    <a class="pill" href="#cache" onclick="scrollTo('cache',event)">Cache</a>
+    <a class="pill" href="#messaging" onclick="scrollTo('messaging',event)">Messaging</a>
+    <a class="pill" href="#storage" onclick="scrollTo('storage',event)">Storage</a>
+    <a class="pill" href="#replication" onclick="scrollTo('replication',event)">Replication</a>
+    <a class="pill" href="#fault" onclick="scrollTo('fault',event)">Fault tolerance</a>
+    <a class="pill" href="#ratelimit" onclick="scrollTo('ratelimit',event)">Rate limiting</a>
+    <a class="pill" href="#requirements" onclick="scrollTo('requirements',event)">Requirements</a>
+    <a class="pill" href="#signals" onclick="scrollTo('signals',event)">Interview signals</a>
+  </div>
+</div>
+
+<div class="page" id="main-content">
+
+  <!-- INGRESS -->
+  <section id="ingress" class="section">
+    <div class="section-header">
+      <span class="section-title">Ingress layer</span>
+      <span class="section-tag tag-scale">scalability</span>
+      <span class="section-tag tag-fault">fault tolerance</span>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <div class="card-title">DNS</div>
+        <div class="card-body">Routes clients to entry points. GeoDNS for multi-region routing — clients resolve to the nearest region. TTL controls propagation lag vs. failover speed.</div>
+        <div class="card-tags"><span class="ctag when">read-heavy global</span><span class="ctag when">multi-region</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Load balancer — L4 vs L7</div>
+        <div class="card-body">L4 (TCP): raw throughput, minimal overhead. L7 (HTTP): content-aware routing, sticky sessions, SSL termination, path-based routing. Almost always L7 for web services. Health checks remove dead nodes automatically.</div>
+        <div class="card-tags"><span class="ctag when">always</span><span class="ctag note">L4 for raw perf</span><span class="ctag note">L7 for HTTP apps</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">API gateway</div>
+        <div class="card-body">Single entry point for microservices. Handles rate limiting, auth, request routing, response caching, SSL termination, request/response transformation. Adds latency (~1–5ms), justified when you have 3+ downstream services.</div>
+        <div class="card-tags"><span class="ctag when">microservices</span><span class="ctag avoid">single monolith</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">CDN</div>
+        <div class="card-body">Edge cache for static assets and cacheable API responses. Reduces origin load by 80–95% for media-heavy apps. Cache-Control headers drive TTL. Invalidation is the hard part — use versioned URLs where possible.</div>
+        <div class="card-tags"><span class="ctag when">static / media</span><span class="ctag when">global users</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPUTE -->
+  <section id="compute" class="section">
+    <div class="section-header">
+      <span class="section-title">Compute layer</span>
+      <span class="section-tag tag-scale">scalability</span>
+      <span class="section-tag tag-fault">fault tolerance</span>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <div class="card-title">Stateless services</div>
+        <div class="card-body">Any replica handles any request — session state lives in external cache (Redis). Enables horizontal scaling and easy failover. Default design target. If you find yourself needing sticky sessions, reconsider.</div>
+        <div class="card-tags"><span class="ctag when">default choice</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Worker pool / async processing</div>
+        <div class="card-body">Consumes queue tasks independently from the web tier. Scale workers by queue depth. Good for CPU-heavy, slow, or unreliable work — video encoding, email sending, ML inference, report generation.</div>
+        <div class="card-tags"><span class="ctag when">async workloads</span><span class="ctag when">slow ops</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Serverless / FaaS</div>
+        <div class="card-body">Scales to zero, billed per execution. Ideal for spiky or infrequent workloads. Cold start latency (50ms–2s) is the main tradeoff. Not suitable for latency-sensitive synchronous APIs.</div>
+        <div class="card-tags"><span class="ctag when">event-driven</span><span class="ctag when">spiky</span><span class="ctag avoid">low-latency APIs</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CACHE -->
+  <section id="cache" class="section">
+    <div class="section-header">
+      <span class="section-title">Caching</span>
+      <span class="section-tag tag-scale">scalability</span>
+      <span class="section-tag tag-dur">durability</span>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <div class="card-title">Cache-aside (lazy loading)</div>
+        <div class="card-body">App checks cache → on miss, loads from DB and populates cache. Most common pattern. Cache only holds what's been requested — no wasted memory. Cache stampede risk on cold start or TTL expiry; use probabilistic early expiration or mutex locks.</div>
+        <div class="card-tags"><span class="ctag when">read-heavy</span><span class="ctag note">Redis, Memcached</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Write-through</div>
+        <div class="card-body">Writes go to cache AND DB atomically. Cache is always fresh — no stale reads. Higher write latency. Good when reads immediately follow writes (user profile updates, settings).</div>
+        <div class="card-tags"><span class="ctag when">read + write balance</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Write-behind (write-back)</div>
+        <div class="card-body">Write to cache, flush to DB asynchronously. Lowest write latency. Risk: data loss if cache node dies before flush. Only use if you can tolerate that window.</div>
+        <div class="card-tags"><span class="ctag when">very write-heavy</span><span class="ctag avoid">financial / critical data</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Cache invalidation strategies</div>
+        <div class="card-body">TTL-based: simple, eventual consistency. Event-driven: invalidate on write events via pub/sub. Versioned keys: never invalidate — new key = new version. Versioned keys are the safest at scale.</div>
+        <div class="card-tags"><span class="ctag note">hardest problem in CS</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MESSAGING -->
+  <section id="messaging" class="section">
+    <div class="section-header">
+      <span class="section-title">Message queues &amp; streaming</span>
+      <span class="section-tag tag-scale">scalability</span>
+      <span class="section-tag tag-fault">fault tolerance</span>
+      <span class="section-tag tag-dur">durability</span>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <div class="card-title">Message queue</div>
+        <div class="card-body">Decouples producer from consumer. At-least-once delivery — consumer must be idempotent. Message deleted after acknowledgment. Good for task distribution: one task, one worker. SQS, RabbitMQ.</div>
+        <div class="card-tags"><span class="ctag when">async jobs</span><span class="ctag when">decoupling</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Event stream (Kafka)</div>
+        <div class="card-body">Ordered, replayable, retained log. Multiple consumer groups read independently at their own offset. Retained for days/weeks. Good for audit log, fan-out, real-time analytics, CDC (change data capture).</div>
+        <div class="card-tags"><span class="ctag when">fan-out</span><span class="ctag when">audit log</span><span class="ctag when">analytics</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Pub/sub</div>
+        <div class="card-body">Publisher emits to a topic; each subscriber gets a copy. No retention — subscribers must be online. Good for notifications, live updates, cache invalidation broadcasts. SNS, Google Pub/Sub.</div>
+        <div class="card-tags"><span class="ctag when">notifications</span><span class="ctag when">fan-out</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Dead letter queue (DLQ)</div>
+        <div class="card-body">Receives messages that failed processing after N retries. Essential for debugging and preventing poison-pill messages from blocking a queue. Always set one up alongside any queue.</div>
+        <div class="card-tags"><span class="ctag when">always with queues</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STORAGE -->
+  <section id="storage" class="section">
+    <div class="section-header">
+      <span class="section-title">Storage</span>
+      <span class="section-tag tag-scale">scalability</span>
+      <span class="section-tag tag-dur">durability</span>
+      <span class="section-tag tag-fault">fault tolerance</span>
+    </div>
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-title">Relational DB (SQL)</div>
+        <div class="card-body">ACID transactions, enforced schema, complex joins. Read replicas for scaling reads. Vertical scaling first, then read replicas, then sharding as a last resort. Use when correctness and consistency are critical — financial records, user accounts, relational data.</div>
+        <div class="card-tags"><span class="ctag when">financial</span><span class="ctag when">relational data</span><span class="ctag avoid">massive write throughput</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">NoSQL — which type?</div>
+        <div class="card-body"><strong>Key-value</strong> (Redis, DynamoDB): simple lookups, O(1). <strong>Document</strong> (MongoDB): flexible schema, nested objects. <strong>Wide-column</strong> (Cassandra): write-optimized, time-series, huge scale. <strong>Graph</strong> (Neo4j): relationship traversal. Choose by access pattern, not familiarity.</div>
+        <div class="card-tags"><span class="ctag when">high write throughput</span><span class="ctag when">flexible schema</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Object storage (S3-style)</div>
+        <div class="card-body">Infinitely scalable, cheap, 11-nines durability. Blob storage for media, backups, data lake. Not suitable for transactional data or random small writes. Pair with a CDN for reads.</div>
+        <div class="card-tags"><span class="ctag when">media / files</span><span class="ctag when">backups</span><span class="ctag avoid">transactional data</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Search index (Elasticsearch)</div>
+        <div class="card-body">Inverted index for full-text search, faceting, relevance ranking. Synced from primary DB via Kafka CDC or change streams. Never use as primary store. Keep in sync; accept slight lag.</div>
+        <div class="card-tags"><span class="ctag when">full-text search</span><span class="ctag when">autocomplete</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- REPLICATION & PARTITIONING -->
+  <section id="replication" class="section">
+    <div class="section-header">
+      <span class="section-title">Replication &amp; partitioning</span>
+      <span class="section-tag tag-scale">scalability</span>
+      <span class="section-tag tag-dur">durability</span>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <div class="card-title">Leader-follower replication</div>
+        <div class="card-body">One write node (leader), N read replicas (followers). Replication lag introduces eventual consistency on reads. Scale reads horizontally without touching write path. Automatic failover promotes a follower.</div>
+        <div class="card-tags"><span class="ctag when">read-heavy</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Database sharding</div>
+        <div class="card-body">Horizontal partitioning across nodes. Hash sharding for even distribution; range sharding for ordered scans. Beware hotspots (celebrity problem). Cross-shard queries are painful — design to avoid them. Last resort after read replicas and caching.</div>
+        <div class="card-tags"><span class="ctag when">write throughput</span><span class="ctag when">huge datasets</span><span class="ctag avoid">cross-shard joins</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Consistent hashing</div>
+        <div class="card-body">Ring-based key assignment. Adding/removing a node only moves ~1/N of keys, not a full reshuffle. Virtual nodes (vnodes) even out load distribution. Standard for distributed caches and DHTs.</div>
+        <div class="card-tags"><span class="ctag when">distributed cache</span><span class="ctag when">DHT</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Quorum reads/writes</div>
+        <div class="card-body">W + R &gt; N guarantees you read your own write. Typical: N=3, W=2, R=2. Trade latency for consistency. Cassandra, DynamoDB use this model. Strong consistency at the cost of write latency.</div>
+        <div class="card-tags"><span class="ctag when">distributed stores</span><span class="ctag note">W+R > N for consistency</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAULT TOLERANCE -->
+  <section id="fault" class="section">
+    <div class="section-header">
+      <span class="section-title">Fault tolerance &amp; reliability</span>
+      <span class="section-tag tag-fault">fault tolerance</span>
+      <span class="section-tag tag-dur">durability</span>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <div class="card-title">Circuit breaker</div>
+        <div class="card-body">Stops cascading failures. Three states: Closed (normal), Open (fail fast, don't call downstream), Half-open (probe if recovered). Opens when error rate exceeds threshold. Wrap every downstream call.</div>
+        <div class="card-tags"><span class="ctag when">microservices</span><span class="ctag when">external APIs</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Retry + exponential backoff + jitter</div>
+        <div class="card-body">Retry transient failures with exponential backoff. Jitter (randomized delay) prevents thundering herd — all clients retrying simultaneously. Cap max retries (3–5). Idempotency key required for safe mutation retries.</div>
+        <div class="card-tags"><span class="ctag when">transient failures</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Idempotency keys</div>
+        <div class="card-body">Client-generated UUID per operation. Server deduplicates by key — safe to retry without double-execution. Store results keyed by idempotency key for 24h. Critical for payments, order creation, any state-changing op.</div>
+        <div class="card-tags"><span class="ctag when">payments</span><span class="ctag when">mutations</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Health checks (liveness + readiness)</div>
+        <div class="card-body">Liveness: is the process alive? Readiness: is it ready to serve traffic? Load balancer routes away from unready nodes. Kubernetes uses both. Readiness prevents traffic to nodes still warming up their cache.</div>
+        <div class="card-tags"><span class="ctag when">always</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Multi-region deployment</div>
+        <div class="card-body">Active-active: traffic in all regions, harder consistency (conflict resolution). Active-passive: one region serves, other on standby (simpler, RTO ~minutes). Choose based on availability SLA and consistency requirements.</div>
+        <div class="card-tags"><span class="ctag when">high availability SLA</span><span class="ctag note">active-passive simpler</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Write-ahead log (WAL)</div>
+        <div class="card-body">Every write appended to sequential log before applied to data structure. Enables crash recovery — replay log on restart. Foundation of all durable storage (Postgres, Kafka, RocksDB). Also enables replication.</div>
+        <div class="card-tags"><span class="ctag when">any persistent store</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Bulkhead pattern</div>
+        <div class="card-body">Isolate thread pools or connection pools per downstream service. One slow dependency can't exhaust shared resources. Named after ship compartments — one flood doesn't sink the ship.</div>
+        <div class="card-tags"><span class="ctag when">multi-tenant</span><span class="ctag when">shared infra</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Saga pattern</div>
+        <div class="card-body">Distributed transactions without 2PC. Chain of local transactions; each publishes an event. Compensating transactions roll back on failure. Two styles: choreography (events) vs orchestration (central coordinator).</div>
+        <div class="card-tags"><span class="ctag when">distributed transactions</span><span class="ctag avoid">2PC</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RATE LIMITING -->
+  <section id="ratelimit" class="section">
+    <div class="section-header">
+      <span class="section-title">Rate limiting &amp; back-pressure</span>
+      <span class="section-tag tag-scale">scalability</span>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <div class="card-title">Token bucket</div>
+        <div class="card-body">Tokens refill at steady rate up to capacity. Request costs 1 token. Allows bursts up to bucket size. State: {tokens, last_refill_time} — O(1) per user. Most common for API rate limits. Used by AWS, Stripe.</div>
+        <div class="card-tags"><span class="ctag when">API rate limits</span><span class="ctag when">bursty traffic</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Leaky bucket</div>
+        <div class="card-body">Requests queue; output drains at fixed rate regardless of input. Excess dropped. Guarantees smooth downstream throughput — can't burst. Adds latency. Use to protect slow downstream services.</div>
+        <div class="card-tags"><span class="ctag when">traffic shaping</span><span class="ctag when">protect slow downstream</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Sliding window log</div>
+        <div class="card-body">Track timestamps of requests; count those within window. No boundary spike problem (vs fixed window). More accurate but O(n) memory per user. Redis sorted set: score = timestamp, range query for window.</div>
+        <div class="card-tags"><span class="ctag when">strict fairness</span><span class="ctag note">Redis sorted set</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Back-pressure</div>
+        <div class="card-body">Producer slows when consumer can't keep up. Prevents memory blowup and cascading overload. Signal via: HTTP 429, queue depth metric triggering auto-scaling, TCP flow control. Design consumers to emit back-pressure explicitly.</div>
+        <div class="card-tags"><span class="ctag when">streaming</span><span class="ctag when">async pipelines</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- REQUIREMENTS -->
+  <section id="requirements" class="section">
+    <div class="section-header">
+      <span class="section-title">Requirements to clarify in interviews</span>
+      <span class="section-tag tag-req">requirements</span>
+    </div>
+    <div class="req-intro">
+      <strong>Always clarify requirements before designing.</strong> The first 5 minutes of a system design interview should surface the constraints that determine every component choice. These are the axes that matter most.
+    </div>
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-title">Scalability</div>
+        <div class="card-body">How many users / requests per second at peak? What's the growth rate? Defines whether a single DB suffices or you need sharding, whether one region is enough, what cache hit rate you need.</div>
+        <div class="card-tags"><span class="ctag note">Ask: DAU, peak RPS, data volume</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Availability (nines)</div>
+        <div class="card-body">99.9% = 8.7 hr/yr downtime. 99.99% = 52 min/yr. Drives multi-AZ vs multi-region, active-active vs active-passive, RTO/RPO requirements. Higher nines = exponentially more complexity and cost.</div>
+        <div class="card-tags"><span class="ctag note">Ask: availability SLA, acceptable downtime</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Consistency</div>
+        <div class="card-body">Strong: every read sees the latest write (expensive). Eventual: reads may be stale (cheap). Causal: reads see writes in causal order. Most social features accept eventual; financial ops require strong. State this explicitly — don't let the interviewer infer it.</div>
+        <div class="card-tags"><span class="ctag note">Ask: can users see stale data? For how long?</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Durability</div>
+        <div class="card-body">Can data ever be lost? What's the acceptable RPO (recovery point objective)? Drives replication factor, sync vs async writes, backup frequency. Financial data: zero loss. Social likes: losing a few is acceptable.</div>
+        <div class="card-tags"><span class="ctag note">Ask: what's the cost of data loss?</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Latency &amp; performance</div>
+        <div class="card-body">p50 vs p99 vs p999. The difference between "fast on average" and "never slow." Identify the latency-sensitive path. Async offload anything that doesn't need to be synchronous. SLAs are usually expressed as p99 &lt; N ms.</div>
+        <div class="card-tags"><span class="ctag note">Ask: p99 latency target, sync vs async</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Throughput</div>
+        <div class="card-body">Reads/writes per second at scale. Read-heavy vs write-heavy shapes the entire architecture — read-heavy → caches + replicas; write-heavy → sharding + async queues. 80/20 read-write split is common but verify.</div>
+        <div class="card-tags"><span class="ctag note">Ask: read vs write ratio</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Security &amp; auth</div>
+        <div class="card-body">AuthN: who are you? (JWT, session token, OAuth). AuthZ: what can you do? (RBAC, ABAC). API key management for service-to-service. Rate limit per identity, not just per IP. Especially important for payment and user-data APIs.</div>
+        <div class="card-tags"><span class="ctag note">Ask: auth requirements, public vs private API</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Observability</div>
+        <div class="card-body">Logging (structured, searchable), metrics (latency, error rate, saturation — RED method), tracing (distributed trace per request). How do you know the system is healthy? What pagers you at 3am? Proactively mentioning this impresses interviewers.</div>
+        <div class="card-tags"><span class="ctag note">Logs + metrics + traces = pillars</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Data model &amp; access patterns</div>
+        <div class="card-body">What queries must be fast? What's the read/write access pattern? This determines DB choice more than anything else. "Point lookup by ID" → key-value. "Fan-out with joins" → SQL. "Time-ordered by user" → wide-column. Model queries first, schema second.</div>
+        <div class="card-tags"><span class="ctag note">Ask: primary query patterns</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Cost &amp; efficiency</div>
+        <div class="card-body">Storage cost, compute cost, egress cost. At FAANG scale, architecture IS cost. Choosing async over sync, batch over streaming, S3 over EBS, spot instances for workers — all cost-motivated. Mention cost when justifying component choices.</div>
+        <div class="card-tags"><span class="ctag note">Egress is often the surprise</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Compliance &amp; data residency</div>
+        <div class="card-body">GDPR: right to erasure, data stays in EU. HIPAA: PHI encryption, audit logs. PCI-DSS: card data isolation. Data residency can force multi-region to be mandatory, not optional. Always ask in any design involving user PII.</div>
+        <div class="card-tags"><span class="ctag note">Ask: PII, geographic requirements</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Fault tolerance requirements</div>
+        <div class="card-body">What failure modes must the system survive? Single node, AZ, region? What's the RTO (time to recover)? What degraded mode is acceptable — read-only? Cached responses? This drives whether you need active-active or active-passive.</div>
+        <div class="card-tags"><span class="ctag note">Ask: RTO, RPO, acceptable degraded modes</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CAP -->
+  <section id="cap" class="section">
+    <div class="section-header">
+      <span class="section-title">CAP theorem</span>
+      <span class="section-tag tag-req">requirements</span>
+    </div>
+    <div class="cap-grid">
+      <div class="cap-card cap-cp">
+        <div class="cap-label">CP — Consistent + Partition-tolerant</div>
+        <div class="cap-body">Use when correctness &gt; availability. System may be unavailable during network partition but will never return stale data. Banking, inventory, leader election, distributed locks.</div>
+        <div class="cap-examples">Examples: HBase, Zookeeper, etcd, MongoDB (w: majority)</div>
+      </div>
+      <div class="cap-card cap-ap">
+        <div class="cap-label">AP — Available + Partition-tolerant</div>
+        <div class="cap-body">Use when uptime &gt; strict consistency. Returns possibly stale data during partition. Social feeds, shopping carts, DNS caches, product catalogs.</div>
+        <div class="cap-examples">Examples: Cassandra, DynamoDB (default), CouchDB, Riak</div>
+      </div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;font-size:12px;color:var(--text2);line-height:1.6">
+      <span style="color:var(--accent4);font-weight:500">Interview nuance:</span> Most real systems accept eventual consistency for reads with strong consistency on writes to a primary. Say this explicitly — "I'll use leader-follower replication, accepting a short replication lag on reads from replicas, which is acceptable for this use case because…" That sentence alone signals mature thinking.
+    </div>
+  </section>
+
+  <!-- NUMBERS -->
+  <section id="numbers" class="section">
+    <div class="section-header">
+      <span class="section-title">Numbers every candidate should know</span>
+      <span class="section-tag tag-all">reference</span>
+    </div>
+    <div class="nums-grid">
+      <div class="num-block">
+        L1 cache hit &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="num-val">~0.5 ns</span><br>
+        L2 cache hit &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="num-val">~7 ns</span><br>
+        Main memory &nbsp;&nbsp;&nbsp;&nbsp; <span class="num-val">~100 ns</span><br>
+        SSD random read &nbsp;<span class="num-val">~100 µs</span><br>
+        HDD seek &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="num-val">~10 ms</span><br>
+        Same-DC roundtrip <span class="num-val">~0.5 ms</span><br>
+        Cross-region roundtrip <span class="num-val">~100 ms</span>
+      </div>
+      <div class="num-block">
+        1M RPS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="num-val">~1000 servers @ 1K RPS each</span><br>
+        1 TB/day &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="num-val">~12 MB/s sustained</span><br>
+        100M users &nbsp;&nbsp;&nbsp; <span class="num-val">~100GB if 1KB/user</span><br>
+        99.9% uptime &nbsp; <span class="num-val">8.7 hrs/yr downtime</span><br>
+        99.99% uptime &nbsp;<span class="num-val">52 min/yr downtime</span><br>
+        99.999% uptime &nbsp;<span class="num-val">5 min/yr downtime</span><br>
+        Replication baseline <span class="num-val">3 replicas standard</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- INTERVIEW SIGNALS -->
+  <section id="signals" class="section">
+    <div class="section-header">
+      <span class="section-title">Interview signal cues</span>
+      <span class="section-tag tag-req">signals</span>
+    </div>
+
+    <div class="signal">
+      <div class="signal-q">"Design a system for millions of users"</div>
+      <div class="signal-a">Stateless services + horizontal scaling + load balancer + read replicas. Add caching layer. <strong>Mention read replicas before sharding</strong> — sharding is a last resort. Estimate: at 1K RPS/server, 100K RPS = 100 servers.</div>
+    </div>
+    <div class="signal">
+      <div class="signal-q">"How do you handle a viral post / traffic spike?"</div>
+      <div class="signal-a">CDN for static, <strong>cache-aside for hot data</strong>, queue to absorb write bursts, auto-scaling compute, back-pressure on queue consumers. Pre-warm caches for anticipated events.</div>
+    </div>
+    <div class="signal">
+      <div class="signal-q">"What happens if a service goes down?"</div>
+      <div class="signal-a"><strong>Circuit breaker</strong> + retry with jitter, health checks in LB route away instantly, queue buffers in-flight work during outage, DB replicas cover read traffic. Critical path → multi-region active-passive.</div>
+    </div>
+    <div class="signal">
+      <div class="signal-q">"How do you avoid data loss?"</div>
+      <div class="signal-a"><strong>WAL</strong>, replication factor ≥ 3, only ack after quorum write, S3 versioning for blobs, idempotency keys for retries, scheduled backups with tested restore.</div>
+    </div>
+    <div class="signal">
+      <div class="signal-q">"How do you keep the feed / timeline fast?"</div>
+      <div class="signal-a">Pre-compute + <strong>fan-out-on-write</strong> for small follow counts. Fan-out-on-read for celebrities (pull hybrid). Cache in Redis sorted set keyed by user ID, score = timestamp.</div>
+    </div>
+    <div class="signal">
+      <div class="signal-q">"How do you implement search efficiently?"</div>
+      <div class="signal-a"><strong>Elasticsearch / Lucene inverted index</strong>. Sync from DB via Kafka CDC. Separate read path from write path. Mention relevance ranking, autocomplete via prefix tree if asked.</div>
+    </div>
+    <div class="signal">
+      <div class="signal-q">"How do you count unique views at scale?"</div>
+      <div class="signal-a"><strong>HyperLogLog</strong> for approximate unique counts (~2% error, O(1) memory). Kafka for event ingestion. Batch aggregation (Spark/Flink) for exact counts with higher latency. Pre-aggregate into time-bucketed counters in Redis.</div>
+    </div>
+    <div class="signal">
+      <div class="signal-q">"How would you design the payment flow?"</div>
+      <div class="signal-a"><strong>Idempotency key</strong> on every request. <strong>Saga pattern</strong> for distributed transaction (not 2PC). At-least-once queue with dedup. Audit log via WAL. Reconciliation job catches gaps. PCI-DSS data isolation.</div>
+    </div>
+    <div class="signal">
+      <div class="signal-q">"How do you know if your system is healthy?"</div>
+      <div class="signal-a"><strong>RED method</strong>: Rate (req/s), Errors (error%), Duration (latency). Structured logs → searchable (Datadog, ELK). Distributed tracing for slow request root cause. Alerts on p99 latency + error rate, not just avg.</div>
+    </div>
+    <div class="signal">
+      <div class="signal-q">"How do you handle multi-region consistency?"</div>
+      <div class="signal-a">State the tradeoff: <strong>active-active needs conflict resolution</strong> (last-write-wins, CRDTs, or application-level merge). Active-passive is simpler, RTO ~minutes. Most companies start active-passive, promote to active-active when they need it.</div>
+    </div>
+  </section>
+
+  <footer>
+    System Design Interview Cheat Sheet &nbsp;·&nbsp; Use with your notes &nbsp;·&nbsp; Review before every loop
+  </footer>
+
+</div>
+
+<script>
+function scrollTo(id, e) {
+  if (e) e.preventDefault();
+  document.getElementById(id)?.scrollIntoView({behavior:'smooth'});
+  document.querySelectorAll('.sticky-inner .pill').forEach(p => p.classList.remove('active'));
+  if (e) e.target.classList.add('active');
+}
+function filterAll(e) {
+  e.preventDefault();
+  document.querySelectorAll('.sticky-inner .pill').forEach(p => p.classList.remove('active'));
+  e.target.classList.add('active');
+  document.querySelectorAll('section').forEach(s => s.classList.remove('hidden'));
+  document.getElementById('main-content').scrollIntoView({behavior:'smooth'});
+}
+function doSearch(q) {
+  var v = q.trim().toLowerCase();
+  if (!v) {
+    document.querySelectorAll('.card, .signal').forEach(c => c.classList.remove('hidden'));
+    document.querySelectorAll('section').forEach(s => s.classList.remove('hidden'));
+    return;
+  }
+  document.querySelectorAll('.card, .signal').forEach(c => {
+    var txt = c.textContent.toLowerCase();
+    c.classList.toggle('hidden', !txt.includes(v));
+  });
+  document.querySelectorAll('section').forEach(s => {
+    var vis = [...s.querySelectorAll('.card, .signal')].some(c => !c.classList.contains('hidden'));
+    s.classList.toggle('hidden', !vis);
+  });
+}
+</script>
+</body>
+</html>
